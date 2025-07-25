@@ -28,6 +28,22 @@ class Twoc2p
         $this->setBaseUrl();
     }
 
+    public function doPayment($requestPayload){
+
+            $requestPayload = array_merge(
+            [
+                'merchantID' => $this->getMerchantID(),
+                'currencyCode' => $this->getCurrencyCode(),
+            ],
+            $requestPayload
+        );
+
+            $response = Http::withHeaders([
+                'Content-Type' => 'application/json'
+            ])->post($this->getUrl('payment'), $requestPayload);
+
+          return $response->json();
+    }
     public function createPayment(array $requestPayload = [])
     {
         $requestPayload = array_merge(
@@ -74,6 +90,7 @@ class Twoc2p
                                 'id' => $twoc2pPayment->id,
                                 'currency_code' => $this->getCurrencyCode(),
                                 'payment_url' => data_get($decoded, 'webPaymentUrl'),
+                                'payment_token' => data_get($decoded, 'paymentToken'),
                             ];
                         }
                     }
@@ -89,16 +106,17 @@ class Twoc2p
         }
     }
 
-    public function paymentInquiry(string $payment_id)
+    public function paymentInquiry(array $requestPayload = [])
     {
-        $payment = Twoc2pPayment::findOrFail($payment_id);
+        $data = array_merge(
+            [
+                 'merchantID' => $this->getMerchantID(),
+                'locale' => null,
+            ],
+            $requestPayload
+        );
 
-        $data = [
-            'paymentToken' => data_get($payment->response, 'paymentToken'),
-            'merchantID' => data_get($payment->request, 'merchantID'),
-            'invoiceNo' => data_get($payment->request, 'invoiceNo'),
-            'locale' => null,
-        ];
+       
 
         try {
 
