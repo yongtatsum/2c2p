@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Str;
 use Laraditz\Twoc2p\Models\Twoc2pPayment;
 use LogicException;
+use Firebase\JWT\Key;
 
 class Twoc2p
 {
@@ -47,12 +48,12 @@ class Twoc2p
 
         try {
 
-            $jwt = JWT::encode($requestPayload, $this->getMerchantSecret());
+            $jwt = JWT::encode($requestPayload, $this->getMerchantSecret(), 'HS256');
 
             $response = Http::acceptJson()->post($this->getUrl('paymentToken'), [
                 'payload' => $jwt,
             ]);
-
+          
             $response->throw();
 
             if ($response->successful()) {
@@ -127,12 +128,12 @@ class Twoc2p
 
     public function encodeJWT(array $content)
     {
-        return JWT::encode($content, $this->getMerchantSecret());
+        return JWT::encode($content, $this->getMerchantSecret(), 'HS256');
     }
 
     public function decodeJWT(string $content)
     {
-        return JWT::decode($content, $this->getMerchantSecret(), ['HS256']);
+        return JWT::decode($content, new Key($this->getMerchantSecret(), 'HS256'));
     }
 
     public function setBaseUrl()
